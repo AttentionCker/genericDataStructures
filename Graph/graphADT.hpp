@@ -93,25 +93,25 @@ int Graph<TYPE, KTYPE>::add_Vertex(TYPE DataIn)
         return 1;
     }
 
-    Vertex<TYPE>    *pWalk_Vertex = nullptr, *pPrev_Vertex = nullptr;
-    pWalk_Vertex = first;
+    Vertex<TYPE>    *pWalkVertex = nullptr, *pPrevVertex = nullptr;
+    pWalkVertex = first;
 
-    while(pWalk_Vertex && (pWalk_Vertex->data).key < DataIn.key)        //fixed a bug(probably) : from Vertex->data->key to (Vertex->data).key  
+    while(pWalkVertex && (pWalkVertex->data).key < DataIn.key)        //fixed a bug(probably) : from Vertex->data->key to (Vertex->data).key  
     {
-        pPrev_Vertex = pWalk_Vertex;
-        pWalk_Vertex = pWalk_Vertex->pNextVertex;
+        pPrevVertex = pWalkVertex;
+        pWalkVertex = pWalkVertex->pNextVertex;
     }    
 
-    if(!pPrev_Vertex)
+    if(!pPrevVertex)
     {
         first = newVertex;
     }
     else
     {
-        pPrev_Vertex->pNextVertex = newVertex;
+        pPrevVertex->pNextVertex = newVertex;
     }
     
-    newVertex->pNextVertex = pWalk_Vertex;
+    newVertex->pNextVertex = pWalkVertex;
 
     return 1;
 }
@@ -125,32 +125,32 @@ int Graph<TYPE, KTYPE>::delete_Vertex(KTYPE key)
         return -1;      //graph empty
     }
 
-    Vertex<TYPE>    *pWalk_Vertex = first;
-    Vertex<TYPE>    *pPrev_Vertex = nullptr;
+    Vertex<TYPE>    *pWalkVertex = first;
+    Vertex<TYPE>    *pPrevVertex = nullptr;
 
-    while(pWalk_Vertex && (pWalk_Vertex->data).key < Key)
+    while(pWalkVertex && (pWalkVertex->data).key < Key)
     {
-        pPrev_Vertex = pWalk_Vertex;
-        pWalk_Vertex = pWalk_Vertex->pNextVertex;
+        pPrevVertex = pWalkVertex;
+        pWalkVertex = pWalkVertex->pNextVertex;
     }    
 
-    if(!pWalk_Vertex || (pWalk_Vertex->data).key != Key)
+    if(!pWalkVertex || (pWalkVertex->data).key != Key)
     {
         return -2;  //Element not found in the graph
     }
 
-    if(pWalk_Vertex->indegree == 0 && pWalk_Vertex->outdegree == 0)
+    if(pWalkVertex->indegree == 0 && pWalkVertex->outdegree == 0)
     {
-        if(!pPrev_Vertex)
+        if(!pPrevVertex)
         {
             first = first->newVertex;
         }
         else
         {
-            pPrev_Vertex->pNextVertex = pWalk_Vertex->pNextVertex;
+            pPrevVertex->pNextVertex = pWalkVertex->pNextVertex;
         }
 
-        delete pWalk_Vertex;
+        delete pWalkVertex;
         count--;
         return 1;
         
@@ -180,15 +180,15 @@ int Graph<TYPE, KTYPE>::add_Arc(KTYPE fromKey, KTYPE toKey)
     }
 
     //temporarily swaping from and to keys to make program efficient
-    bool key_swap;
+    bool keySwap;
     if(fromKey < toKey)         
     {
-        key_swap = false;
+        keySwap = false;
     }
     else
     {
         swap(fromKey,toKey);
-        key_swap = true;
+        keySwap = true;
     } 
 
     //finding the element pointer for keys (fromKey corresponds to vertex prior to toKey ----pfromVertex starts from first)
@@ -217,7 +217,7 @@ int Graph<TYPE, KTYPE>::add_Arc(KTYPE fromKey, KTYPE toKey)
 
     //key matches found and vertices found
 
-    if(key_swap)
+    if(keySwap)
     {
         swap(fromKey, toKey);
         swap(pfromVertex, ptoVertex);
@@ -238,30 +238,33 @@ int Graph<TYPE, KTYPE>::add_Arc(KTYPE fromKey, KTYPE toKey)
     }
 
     //else find place to insert the arc in the pfromVertex's adacency list
-    Arc<TYPE>   *pWalk_Arc = pfromVertex->pArc, *pPrev_Arc = nullptr;
+    Arc<TYPE>   *pWalkArc = pfromVertex->pArc, *pPrevArc = nullptr;
 
-    while(pWalk_Arc && pWalk_Arc->pDestination->data.key < toKey)
+    while(pWalkArc && pWalkArc->pDestination->data.key < toKey)
     {
-        pPrev_Arc = pWalk_Arc;
-        pWalk_Arc = pWalk_Arc->pNextArc;
+        pPrevArc = pWalkArc;
+        pWalkArc = pWalkArc->pNextArc;
     }
 
-    if(pWalk_Arc->pDestination->data.key == toKey)
+    if(pWalkArc->pDestination->data.key == toKey)
     {
         return -3;  //arc already exists
     }
 
-    if(!pPrev_Arc)
+    if(!pPrevArc)
     {
         pfromVertex->pArc = newArc;
     }
     else
     {
-        pPrev_Arc->pNextArc = newArc;
+        pPrevArc->pNextArc = newArc;
     }
     
-    newArc->pNextArc = pWalk_Arc;
+    newArc->pNextArc = pWalkArc;
 
     return 1;   //successfully added ARC
 
 }
+
+
+
