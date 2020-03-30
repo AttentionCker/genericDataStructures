@@ -2,7 +2,7 @@
 #
 
 
-//declaring prototypes templates of STRUCTS to be used by the graph
+//declaring prototypes templates of STRUCTS to be used by the Graph
 template <class TYPE>
 struct Vertex;
 
@@ -34,17 +34,17 @@ struct Arc
 
 
 
-//declaring the graph data type and function prototypes of various function implementations used by the graph
+//declaring the Graph data type and function prototypes of various function implementations used by the Graph
 template <class TYPE, class KTYPE>
-class graph
+class Graph
 {
     Vertex<TYPE>    *first;
     unsigned int    count;
 
     public:
 
-        graph();
-        ~graph();
+        Graph();
+        ~Graph();
 
         // Basic Operations:
         int add_Vertex(TYPE DataIn);
@@ -59,3 +59,59 @@ class graph
         int BreadthFirstTravel(void);
 
 };
+
+//function definitions of the class Graph:
+template <class TYPE, class KTYPE>
+Graph<TYPE, KTYPE>::Graph()
+{
+    count = 0;
+    first = nullptr;
+}
+
+
+template <class TYPE, class KTYPE>
+int Graph<TYPE, KTYPE>::add_Vertex(TYPE DataIn)
+{
+    Vertex<TYPE> *newVertex = nullptr;   
+
+    newVertex = new Vertex<TYPE>;
+
+    if(!newVertex)       // if newVertext = nullptr (nullptr is convertible to bool value)
+        return 0;       //0 -> to indicate memory overflow or general failure
+
+    count++;
+    newVertex->data         =   DataIn;
+    newVertex->indegree     =   0;
+    newVertex->outdegree    =   0;
+    newVertex->processed    =   0; 
+    newVertex->pArc         =   nullptr;
+    newVertex->pNextVertex  =   nullptr;
+
+    if(first == nullptr)    //or if(!first)
+    {
+        first = newVertex;
+        return 1;
+    }
+
+    Vertex<TYPE>    *pWalk_Vertex = nullptr, *pPrev_Vertex = nullptr;
+    pWalk_Vertex = first;
+
+    while(pWalk_Vertex && pWalk_Vertex->data->key < DataIn.key)
+    {
+        pPrev_Vertex = pWalk_Vertex;
+        pWalk_Vertex = pWalk_Vertex->pNextVertex;
+    }    
+
+    if(!pPrev_Vertex)
+    {
+        first = newVertex;
+    }
+    else
+    {
+        pPrev_Vertex->pNextVertex =newVertex;
+    }
+    
+    newVertex->pNextVertex = pWalk_Vertex;
+
+    return 1;
+}
