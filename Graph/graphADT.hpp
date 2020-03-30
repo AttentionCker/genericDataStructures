@@ -117,3 +117,50 @@ int Graph<TYPE, KTYPE>::add_Vertex(TYPE DataIn)
 }
 
 
+template <class TYPE, class KTYPE>
+int Graph<TYPE, KTYPE>::delete_Vertex(KTYPE key)
+{
+    if(!first)
+    { 
+        return -1;      //graph empty
+    }
+
+    Vertex<TYPE>    *pWalk_Vertex = first;
+    Vertex<TYPE>    *pPrev_Vertex = nullptr;
+
+    while(pWalk_Vertex && (pWalk_Vertex->data).key < Key)
+    {
+        pPrev_Vertex = pWalk_Vertex;
+        pWalk_Vertex = pWalk_Vertex->pNextVertex;
+    }    
+
+    if(!pWalk_Vertex || (pWalk_Vertex->data).key != Key)
+    {
+        return -2;  //Element not found in the graph
+    }
+
+    if(pWalk_Vertex->indegree == 0 && pWalk_Vertex->outdegree == 0)
+    {
+        if(!pPrev_Vertex)
+        {
+            first = first->newVertex;
+        }
+        else
+        {
+            pPrev_Vertex->pNextVertex = pWalk_Vertex->pNextVertex;
+        }
+
+        delete pWalk_Vertex;
+        count--;
+        return 1;
+        
+    }    
+    else
+    {
+        return -3;      //can't delete as of now
+    }
+    
+
+}
+
+
