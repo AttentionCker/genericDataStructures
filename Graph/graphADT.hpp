@@ -164,3 +164,104 @@ int Graph<TYPE, KTYPE>::delete_Vertex(KTYPE key)
 }
 
 
+template<class TYPE, class KTYPE>
+int Graph<TYPE, KTYPE>::add_Arc(KTYPE fromKey, KTYPE toKey)
+{
+    //return values used: 
+    //  1   success
+    // -1   loop not allowed in my graph
+    // -2   no key match
+    // -3   arc already exists
+
+
+    if(fromKey == toKey)
+    {
+        return -1; //loop not allowed in my graph
+    }
+
+    //temporarily swaping from and to keys to make program efficient
+    bool key_swap;
+    if(fromKey < toKey)         
+    {
+        key_swap = false;
+    }
+    else
+    {
+        swap(fromKey,toKey);
+        key_swap = true;
+    } 
+
+    //finding the element pointer for keys (fromKey corresponds to vertex prior to toKey ----pfromVertex starts from first)
+    Vertex<TYPE>    *pfromVertex = first, *ptoVertex=nullptr;
+
+    while(pfromVertex && pfromVertex->data.key < fromKey)
+    {
+        pfromVertex = pfromVertex->pNextVertex;
+    }
+    if(!pfromVertex || pfromVertex->data.key != fromKey)
+    {
+        return -2;  //no key match
+    }
+
+    //as toKey>fromKey ptoVertex descends(is after) pfromVertex
+    ptoVertex = pfromVertex;
+
+    while(ptoVertex && pfromVertex->data.key < toKey)
+    {
+        ptoVertex = ptoVertex->pNextVertex;
+    }
+    if(!ptoVertex || pfromVertex->data.key != toKey)
+    {
+        return -2;  //key match not found
+    }
+
+    //key matches found and vertices found
+
+    if(key_swap)
+    {
+        swap(fromKey, toKey);
+        swap(pfromVertex, ptoVertex);
+    }//ptrs to "from" and "to" vertices found in the graph
+
+    
+    //creating new arc:
+    Arc<TYPE>   *newArc     =   new Arc<TYPE>;
+    newArc->pDestination    =   ptoVertex;
+    newArc->pNextArc        =   nullptr;
+    pfromVertex->outdegree++;
+    ptoVertex->indegree++;
+
+    if(!pfromVertex->pArc)
+    {
+        pfromVertex->pArc = newArc;
+        return 1;                       //successfully created first arc of pfromVertex
+    }
+
+    //else find place to insert the arc in the pfromVertex's adacency list
+    Arc<TYPE>   *pWalk_Arc = pfromVertex->pArc, *pPrev_Arc = nullptr;
+
+    while(pWalk_Arc && pWalk_Arc->pDestination->data.key < toKey)
+    {
+        pPrev_Arc = pWalk_Arc;
+        pWalk_Arc = pWalk_Arc->pNextArc;
+    }
+
+    if(pWalk_Arc->pDestination->data.key == toKey)
+    {
+        return -3;  //arc already exists
+    }
+
+    if(!pPrev_Arc)
+    {
+        pfromVertex->pArc = newArc;
+    }
+    else
+    {
+        pPrev_Arc->pNextArc = newArc;
+    }
+    
+    newArc->pNextArc = pWalk_Arc;
+
+    return 1;   //successfully added ARC
+
+}
