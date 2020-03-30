@@ -96,7 +96,7 @@ int Graph<TYPE, KTYPE>::add_Vertex(TYPE DataIn)
     Vertex<TYPE>    *pWalk_Vertex = nullptr, *pPrev_Vertex = nullptr;
     pWalk_Vertex = first;
 
-    while(pWalk_Vertex && pWalk_Vertex->data->key < DataIn.key)
+    while(pWalk_Vertex && (pWalk_Vertex->data).key < DataIn.key)        //fixed a bug(probably) : from Vertex->data->key to (Vertex->data).key  
     {
         pPrev_Vertex = pWalk_Vertex;
         pWalk_Vertex = pWalk_Vertex->pNextVertex;
@@ -108,10 +108,12 @@ int Graph<TYPE, KTYPE>::add_Vertex(TYPE DataIn)
     }
     else
     {
-        pPrev_Vertex->pNextVertex =newVertex;
+        pPrev_Vertex->pNextVertex = newVertex;
     }
     
     newVertex->pNextVertex = pWalk_Vertex;
 
     return 1;
 }
+
+
