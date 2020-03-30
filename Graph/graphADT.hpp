@@ -1,5 +1,6 @@
 #
 #
+#include<utility>
 
 
 //declaring prototypes templates of STRUCTS to be used by the Graph
@@ -44,7 +45,7 @@ class Graph
     public:
 
         Graph();
-        ~Graph();
+        ~Graph(){}          //temp graph destructor definition...remember to change as per need later if need arises
 
         // Basic Operations:
         int add_Vertex(TYPE DataIn);
@@ -52,7 +53,7 @@ class Graph
         int add_Arc(KTYPE fromKey, KTYPE toKey);
         int delete_Arc(KTYPE fromKey, KTYPE toKey);
         int find_Vertex(KTYPE Key, TYPE& DataOut);
-        int Vertex_count(void);
+        int Vertex_count(void){return count;};
 
         //Traversals:
         int DepthFirstTravel(void);
@@ -118,7 +119,7 @@ int Graph<TYPE, KTYPE>::add_Vertex(TYPE DataIn)
 
 
 template <class TYPE, class KTYPE>
-int Graph<TYPE, KTYPE>::delete_Vertex(KTYPE key)
+int Graph<TYPE, KTYPE>::delete_Vertex(KTYPE Key)
 {
     if(!first)
     { 
@@ -143,7 +144,7 @@ int Graph<TYPE, KTYPE>::delete_Vertex(KTYPE key)
     {
         if(!pPrevVertex)
         {
-            first = first->newVertex;
+            first = first->pNextVertex;
         }
         else
         {
@@ -168,10 +169,10 @@ template<class TYPE, class KTYPE>
 int Graph<TYPE, KTYPE>::add_Arc(KTYPE fromKey, KTYPE toKey)
 {
     //return values used: 
-    //  1   success
     // -1   loop not allowed in my graph
     // -2   no key match
     // -3   arc already exists
+    //  1   success
 
 
     if(fromKey == toKey)
@@ -187,7 +188,7 @@ int Graph<TYPE, KTYPE>::add_Arc(KTYPE fromKey, KTYPE toKey)
     }
     else
     {
-        swap(fromKey,toKey);
+        std::swap(fromKey,toKey);
         keySwap = true;
     } 
 
@@ -219,8 +220,8 @@ int Graph<TYPE, KTYPE>::add_Arc(KTYPE fromKey, KTYPE toKey)
 
     if(keySwap)
     {
-        swap(fromKey, toKey);
-        swap(pfromVertex, ptoVertex);
+        std::swap(fromKey, toKey);
+        std::swap(pfromVertex, ptoVertex);
     }//ptrs to "from" and "to" vertices found in the graph
 
     
@@ -268,3 +269,35 @@ int Graph<TYPE, KTYPE>::add_Arc(KTYPE fromKey, KTYPE toKey)
 
 
 
+
+template <class TYPE, class KTYPE>
+int Graph<TYPE, KTYPE>::find_Vertex(KTYPE Key, TYPE &DataOut)
+{   
+    // return values:
+    // -1   No match for key
+    //  1   Successfully located vertex and data loaded in DataOut 
+
+    if(!first)
+    {
+        return -1;  //key not found as no vertex is present in the graph
+    }
+
+
+    Vertex<TYPE>    *pWalkVertex = first;
+    
+    while(pWalkVertex && pWalkVertex->data.key < Key)
+    {
+        pWalkVertex = pWalkVertex->pNextVertex;
+    }
+
+    if(pWalkVertex->data.key == Key)        //vertex found
+    {
+        DataOut = pWalkVertex->data;
+        return 1;                           //successfully located the vertex and data loaded in DataOut
+    }
+    else
+    {
+        return -1;                          //no key match
+    }
+
+}
