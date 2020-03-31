@@ -207,11 +207,11 @@ int Graph<TYPE, KTYPE>::add_Arc(KTYPE fromKey, KTYPE toKey)
     //as toKey>fromKey ptoVertex descends(is after) pfromVertex
     ptoVertex = pfromVertex;
 
-    while(ptoVertex && pfromVertex->data.key < toKey)
+    while(ptoVertex && ptoVertex->data.key < toKey)
     {
         ptoVertex = ptoVertex->pNextVertex;
     }
-    if(!ptoVertex || pfromVertex->data.key != toKey)
+    if(!ptoVertex || ptoVertex->data.key != toKey)
     {
         return -2;  //key match not found
     }
@@ -247,7 +247,8 @@ int Graph<TYPE, KTYPE>::add_Arc(KTYPE fromKey, KTYPE toKey)
         pWalkArc = pWalkArc->pNextArc;
     }
 
-    if(pWalkArc->pDestination->data.key == toKey)
+    
+    if(pWalkArc && pWalkArc->pDestination->data.key == toKey)
     {
         return -3;  //arc already exists
     }
