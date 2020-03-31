@@ -48,12 +48,12 @@ class Graph
         ~Graph(){}          //temp graph destructor definition...remember to change as per need later if need arises
 
         // Basic Operations:
-        int add_Vertex(TYPE DataIn);
-        int delete_Vertex(KTYPE Key);
-        int add_Arc(KTYPE fromKey, KTYPE toKey);
-        int delete_Arc(KTYPE fromKey, KTYPE toKey);
-        int find_Vertex(KTYPE Key, TYPE& DataOut);
-        int Vertex_count(void){return count;};
+        int add_Vertex(TYPE DataIn);                //done
+        int delete_Vertex(KTYPE Key);               //done --- not completely (wont delete vertex if not disjoint)
+        int add_Arc(KTYPE fromKey, KTYPE toKey);    //done
+        int delete_Arc(KTYPE fromKey, KTYPE toKey); //done
+        int find_Vertex(KTYPE Key, TYPE& DataOut);  //done
+        int Vertex_count(void){return count;};      //done
 
         //Traversals:
         int DepthFirstTravel(void);
@@ -268,6 +268,61 @@ int Graph<TYPE, KTYPE>::add_Arc(KTYPE fromKey, KTYPE toKey)
 }
 
 
+template <class TYPE, class KTYPE>
+int Graph<TYPE, KTYPE>::delete_Arc(KTYPE fromKey, KTYPE toKey)
+{
+    // return Values:
+    // -1   vertex not available
+    // -2   arc not available
+
+
+    if(!first)
+    {
+        return -1;      //no vertex in graph
+    }
+
+    Vertex<TYPE>    *pfromVertex;
+
+    while(pfromVertex && pfromVertex->data.key < fromKey)
+    {
+        pfromVertex = pfromVertex->pNextVertex;
+    }
+
+    if(pfromVertex->data.key != fromKey)
+    {
+        return -1;      //no vertex match available
+    }
+
+    Arc<TYPE>   *pWalkArc = pfromVertex->pArc, *pPrevArc = nullptr;
+
+    while(pWalkArc && pWalkArc->pDestination->data.key < toKey)
+    {
+        pPrevArc = pWalkArc;
+        pWalkArc = pWalkArc->pNextArc;
+    }
+
+    if(!pWalkArc || pWalkArc->pDestination->data.key != toKey)
+    {
+        return -2;  //no arc available
+    }
+
+    if(!pPrevArc)
+    {
+        pfromVertex->pArc = pfromVertex->pArc->pNextArc;
+    }
+    else
+    {
+        pPrevArc->pNextArc = pWalkArc->pNextArc;
+    }
+
+    pfromVertex->outdegree--;
+    pWalkArc->pDestination->indegree--;
+
+    delete pWalkArc;
+
+    return 1;   // located successfully & deleted the arc
+
+}
 
 
 template <class TYPE, class KTYPE>
