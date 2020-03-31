@@ -281,7 +281,7 @@ int Graph<TYPE, KTYPE>::delete_Arc(KTYPE fromKey, KTYPE toKey)
         return -1;      //no vertex in graph
     }
 
-    Vertex<TYPE>    *pfromVertex;
+    Vertex<TYPE>    *pfromVertex = first;
 
     while(pfromVertex && pfromVertex->data.key < fromKey)
     {
