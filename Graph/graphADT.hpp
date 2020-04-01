@@ -51,6 +51,7 @@ class Graph
         int add_Vertex(TYPE DataIn);                //done
         int delete_Vertex(KTYPE Key);               //done --- not completely (wont delete vertex if not disjoint)
         int add_Arc(KTYPE fromKey, KTYPE toKey);    //done
+        int add_Arc_bothways(KTYPE fromKey, KTYPE toKey);    //done
         int delete_Arc(KTYPE fromKey, KTYPE toKey); //done
         int find_Vertex(KTYPE Key, TYPE& DataOut);  //done
         int Vertex_count(void){return count;};      //done
@@ -510,4 +511,24 @@ void Graph<TYPE, KTYPE>::Visualize_Graph()
     }
     std::cout<<"\n";
     return;
+}
+
+
+template<class TYPE, class KTYPE>
+int Graph<TYPE, KTYPE>::add_Arc_bothways(KTYPE fromKey, KTYPE toKey)
+{
+    int err = add_Arc(fromKey, toKey);
+
+    if(err == 1)
+    {
+        err = add_Arc(toKey, fromKey);
+    }
+    else
+    {
+        return -1;  //failed
+    }
+
+    return err;     
+    
+
 }
