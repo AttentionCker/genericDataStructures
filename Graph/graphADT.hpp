@@ -1,5 +1,5 @@
-#
-#
+#include<stack>
+#include<queue>
 #include<utility>
 
 
@@ -56,8 +56,8 @@ class Graph
         int Vertex_count(void){return count;};      //done
 
         //Traversals:
-        int DepthFirstTravel(void);
-        int BreadthFirstTravel(void);
+        int DepthFirstTravel(void (*process)(TYPE ProcData));
+        int BreadthFirstTravel(void (*process)(TYPE ProcData));
 
 };
 
@@ -238,7 +238,7 @@ int Graph<TYPE, KTYPE>::add_Arc(KTYPE fromKey, KTYPE toKey)
         return 1;                       //successfully created first arc of pfromVertex
     }
 
-    //else find place to insert the arc in the pfromVertex's adacency list
+    //else find place to insert the arc in the pfromVertex's adjacency list
     Arc<TYPE>   *pWalkArc = pfromVertex->pArc, *pPrevArc = nullptr;
 
     while(pWalkArc && pWalkArc->pDestination->data.key < toKey)
@@ -356,4 +356,121 @@ int Graph<TYPE, KTYPE>::find_Vertex(KTYPE Key, TYPE &DataOut)
         return -1;                          //no key match
     }
 
+}
+
+
+template<class TYPE, class KTYPE>
+int Graph<TYPE, KTYPE>::DepthFirstTravel(void (*process)(TYPE ProcData))
+{
+    if(!first)
+    {
+        return -1;  //empty graph
+    }
+
+    Vertex<TYPE>    *pWalkVertex = first, *currentVertex = nullptr; 
+    Arc<TYPE>       *pWalkArc = nullptr;
+
+    while(pWalkVertex)
+    {
+        pWalkVertex->processed = 0;                     //setting processed flag for all vertices to 0
+        pWalkVertex = pWalkVertex->pNextVertex;
+    }
+
+    pWalkVertex = first;
+    std::stack<Vertex<TYPE>* >   VertexStack;
+
+    while(pWalkVertex)
+    {
+        if(pWalkVertex->processed != 2)                 //vertex has not been processed
+        {
+            if(pWalkVertex->processed == 0)             //vertex not in stack
+            {
+                VertexStack.push(pWalkVertex);  //put in stack
+                pWalkVertex->processed = 1;             //mark in stack
+            }
+
+            while(!VertexStack.empty())
+            {
+                currentVertex = VertexStack.top();
+                VertexStack.pop();
+                currentVertex->processed = 2;
+                process(currentVertex->data);
+                pWalkArc = currentVertex->pArc;
+
+                while(pWalkArc)
+                {
+                    if(pWalkArc->pDestination->processed == 0)
+                    {
+                        VertexStack.push(pWalkArc->pDestination);
+                        pWalkArc->pDestination->processed = 1;
+                    }
+                    pWalkArc = pWalkArc->pNextArc;
+                }
+
+            }
+        }
+        pWalkVertex = pWalkVertex->pNextVertex;
+
+    }
+
+    return 1;
+}
+
+
+
+template<class TYPE, class KTYPE>
+int Graph<TYPE, KTYPE>::BreadthFirstTravel(void (*process)(TYPE ProcData))
+{
+    if(!first)
+    {
+        return -1;  //empty graph
+    }
+
+    Vertex<TYPE>    *pWalkVertex = first, *currentVertex = nullptr; 
+    Arc<TYPE>       *pWalkArc = nullptr;
+
+    while(pWalkVertex)
+    {
+        pWalkVertex->processed = 0;                     //setting processed flag for all vertices to 0
+        pWalkVertex = pWalkVertex->pNextVertex;
+    }
+
+    pWalkVertex = first;
+    std::queue<Vertex<TYPE>* >   VertexQueue;
+
+    while(pWalkVertex)
+    {
+        if(pWalkVertex->processed != 2)                 //vertex has not been processed
+        {
+            if(pWalkVertex->processed == 0)             //vertex not in Queue
+            {
+                VertexQueue.push(pWalkVertex);  //put in Queue
+                pWalkVertex->processed = 1;             //mark in Queue
+            }
+
+            while(!VertexQueue.empty())
+            {
+                currentVertex = VertexQueue.front();
+                VertexQueue.pop();
+                currentVertex->processed = 2;
+
+                pWalkArc = currentVertex->pArc;
+
+                while(pWalkArc)
+                {
+                    if(pWalkArc->pDestination->processed == 0)
+                    {
+                        VertexQueue.push(pWalkArc->pDestination);
+                        pWalkArc->pDestination->processed = 1;
+                    }
+                    pWalkArc = pWalkArc->pNextArc;
+                }
+
+            }
+        }
+        pWalkVertex = pWalkVertex->pNextVertex;
+
+    }
+
+    return 1;
 }
