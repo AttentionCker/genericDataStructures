@@ -1,7 +1,7 @@
 #include<stack>
 #include<queue>
 #include<utility>
-
+#include<iostream>
 
 //declaring prototypes templates of STRUCTS to be used by the Graph
 template <class TYPE>
@@ -56,9 +56,11 @@ class Graph
         int Vertex_count(void){return count;};      //done
 
         //Traversals:
-        int DepthFirstTravel(void (*process)(TYPE ProcData));
-        int BreadthFirstTravel(void (*process)(TYPE ProcData));
-
+        int DepthFirstTravel(void (*process)(TYPE ProcData));   //done
+        int BreadthFirstTravel(void (*process)(TYPE ProcData)); //done
+    
+        //visualise the graph:
+        void Visualize_Graph();                                  //done
 };
 
 //function definitions of the class Graph:
@@ -361,7 +363,11 @@ int Graph<TYPE, KTYPE>::find_Vertex(KTYPE Key, TYPE &DataOut)
 
 template<class TYPE, class KTYPE>
 int Graph<TYPE, KTYPE>::DepthFirstTravel(void (*process)(TYPE ProcData))
-{
+{   
+    // return Values:
+    //  1   success
+    // -1   empty graph
+   
     if(!first)
     {
         return -1;  //empty graph
@@ -420,7 +426,11 @@ int Graph<TYPE, KTYPE>::DepthFirstTravel(void (*process)(TYPE ProcData))
 
 template<class TYPE, class KTYPE>
 int Graph<TYPE, KTYPE>::BreadthFirstTravel(void (*process)(TYPE ProcData))
-{
+{   
+    // return Values:
+    //  1   success
+    // -1   empty graph
+   
     if(!first)
     {
         return -1;  //empty graph
@@ -453,7 +463,7 @@ int Graph<TYPE, KTYPE>::BreadthFirstTravel(void (*process)(TYPE ProcData))
                 currentVertex = VertexQueue.front();
                 VertexQueue.pop();
                 currentVertex->processed = 2;
-
+                process(currentVertex->data);
                 pWalkArc = currentVertex->pArc;
 
                 while(pWalkArc)
@@ -473,4 +483,31 @@ int Graph<TYPE, KTYPE>::BreadthFirstTravel(void (*process)(TYPE ProcData))
     }
 
     return 1;
+}
+
+
+template <class TYPE, class KTYPE>
+void Graph<TYPE, KTYPE>::Visualize_Graph()
+{   
+    
+    if(!first)
+    {
+        return;
+    }
+    Vertex<TYPE>    *pWalkVertex = first;
+    Arc<TYPE>       *pWalkArc = nullptr;
+
+    while(pWalkVertex)
+    {
+        pWalkArc = pWalkVertex->pArc;
+        std::cout<<"\n("<<pWalkVertex->data.key<<", "<<pWalkVertex->data.val<<")";
+        while(pWalkArc)
+        {
+            std::cout<<"=>("<<pWalkArc->pDestination->data.key<<", "<<pWalkArc->pDestination->data.val<<")";
+            pWalkArc = pWalkArc->pNextArc;
+        }
+        pWalkVertex = pWalkVertex->pNextVertex;
+    }
+    std::cout<<"\n";
+    return;
 }
