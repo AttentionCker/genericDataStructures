@@ -31,6 +31,7 @@ struct Arc
 {
     Vertex<TYPE>    *pDestination;
     Arc<TYPE>       *pNextArc;
+    int             weight;
 };
 
 
@@ -50,8 +51,8 @@ class Graph
         // Basic Operations:
         int add_Vertex(TYPE DataIn);                //done
         int delete_Vertex(KTYPE Key);               //done --- not completely (wont delete vertex if not disjoint)
-        int add_Arc(KTYPE fromKey, KTYPE toKey);    //done
-        int add_Arc_bothways(KTYPE fromKey, KTYPE toKey);    //done
+        int add_Arc(KTYPE fromKey, KTYPE toKey, int WEIGHT);    //done
+        int add_Arc_bothways(KTYPE fromKey, KTYPE toKey, int WEIGHT);    //done
         int delete_Arc(KTYPE fromKey, KTYPE toKey); //done
         int find_Vertex(KTYPE Key, TYPE& DataOut);  //done
         int Vertex_count(void){return count;};      //done
@@ -169,7 +170,7 @@ int Graph<TYPE, KTYPE>::delete_Vertex(KTYPE Key)
 
 
 template<class TYPE, class KTYPE>
-int Graph<TYPE, KTYPE>::add_Arc(KTYPE fromKey, KTYPE toKey)
+int Graph<TYPE, KTYPE>::add_Arc(KTYPE fromKey, KTYPE toKey, int WEIGHT = 1)
 {
     //return values used: 
     // -1   loop not allowed in my graph
@@ -232,6 +233,7 @@ int Graph<TYPE, KTYPE>::add_Arc(KTYPE fromKey, KTYPE toKey)
     Arc<TYPE>   *newArc     =   new Arc<TYPE>;
     newArc->pDestination    =   ptoVertex;
     newArc->pNextArc        =   nullptr;
+    newArc->weight          =   WEIGHT;
     pfromVertex->outdegree++;
     ptoVertex->indegree++;
 
@@ -515,13 +517,13 @@ void Graph<TYPE, KTYPE>::Visualize_Graph()
 
 
 template<class TYPE, class KTYPE>
-int Graph<TYPE, KTYPE>::add_Arc_bothways(KTYPE fromKey, KTYPE toKey)
+int Graph<TYPE, KTYPE>::add_Arc_bothways(KTYPE fromKey, KTYPE toKey, int WEIGHT = 1)
 {
-    int err = add_Arc(fromKey, toKey);
+    int err = add_Arc(fromKey, toKey, WEIGHT);
 
     if(err == 1)
     {
-        err = add_Arc(toKey, fromKey);
+        err = add_Arc(toKey, fromKey, WEIGHT);
     }
     else
     {
@@ -529,6 +531,5 @@ int Graph<TYPE, KTYPE>::add_Arc_bothways(KTYPE fromKey, KTYPE toKey)
     }
 
     return err;     
-    
 
 }
