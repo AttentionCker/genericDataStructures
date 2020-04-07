@@ -42,6 +42,7 @@ class Graph
 {
     Vertex<TYPE>    *first;
     unsigned int    count;
+    int             iNumDisjoints;      //-1 if NumDisjoints not calculated
 
     public:
 
@@ -51,8 +52,8 @@ class Graph
         // Basic Operations:
         int add_Vertex(TYPE DataIn);                //done
         int delete_Vertex(KTYPE Key);               //done --- not completely (wont delete vertex if not disjoint)
-        int add_Arc(KTYPE fromKey, KTYPE toKey, int WEIGHT);    //done
-        int add_Arc_bothways(KTYPE fromKey, KTYPE toKey, int WEIGHT);    //done
+        int add_Arc(KTYPE fromKey, KTYPE toKey, int WEIGHT = 1);    //done
+        int add_Arc_bothways(KTYPE fromKey, KTYPE toKey, int WEIGHT = 1);    //done
         int delete_Arc(KTYPE fromKey, KTYPE toKey); //done
         int find_Vertex(KTYPE Key, TYPE& DataOut);  //done
         int Vertex_count(void){return count;};      //done
@@ -62,7 +63,10 @@ class Graph
         int BreadthFirstTravel(void (*process)(TYPE ProcData)); //done
     
         //visualise the graph:
-        void Visualize_Graph();                                  //done
+        void Visualize_Graph();          //done
+        
+        //additional functionalities:
+        int NumOfDisjoints();           //done                
 };
 
 //function definitions of the class Graph:
@@ -71,6 +75,7 @@ Graph<TYPE, KTYPE>::Graph()
 {
     count = 0;
     first = nullptr;
+    iNumDisjoints = -1; 
 }
 
 
@@ -101,11 +106,14 @@ int Graph<TYPE, KTYPE>::add_Vertex(TYPE DataIn)
     Vertex<TYPE>    *pWalkVertex = nullptr, *pPrevVertex = nullptr;
     pWalkVertex = first;
 
-    while(pWalkVertex && (pWalkVertex->data).key < DataIn.key)        //fixed a bug(probably) : from Vertex->data->key to (Vertex->data).key  
+    while(pWalkVertex && pWalkVertex->data.key < DataIn.key)         
     {
         pPrevVertex = pWalkVertex;
         pWalkVertex = pWalkVertex->pNextVertex;
     }    
+
+    if(pWalkVertex && pWalkVertex->data.key == DataIn.key)
+        return -3;                          //vertex already exists
 
     if(!pPrevVertex)
     {
@@ -133,13 +141,13 @@ int Graph<TYPE, KTYPE>::delete_Vertex(KTYPE Key)
     Vertex<TYPE>    *pWalkVertex = first;
     Vertex<TYPE>    *pPrevVertex = nullptr;
 
-    while(pWalkVertex && (pWalkVertex->data).key < Key)
+    while(pWalkVertex && pWalkVertex->data.key < Key)
     {
         pPrevVertex = pWalkVertex;
         pWalkVertex = pWalkVertex->pNextVertex;
     }    
 
-    if(!pWalkVertex || (pWalkVertex->data).key != Key)
+    if(!pWalkVertex || pWalkVertex->data.key != Key)
     {
         return -2;  //Element not found in the graph
     }
@@ -170,7 +178,7 @@ int Graph<TYPE, KTYPE>::delete_Vertex(KTYPE Key)
 
 
 template<class TYPE, class KTYPE>
-int Graph<TYPE, KTYPE>::add_Arc(KTYPE fromKey, KTYPE toKey, int WEIGHT = 1)
+int Graph<TYPE, KTYPE>::add_Arc(KTYPE fromKey, KTYPE toKey, int WEIGHT)
 {
     //return values used: 
     // -1   loop not allowed in my graph
@@ -517,7 +525,7 @@ void Graph<TYPE, KTYPE>::Visualize_Graph()
 
 
 template<class TYPE, class KTYPE>
-int Graph<TYPE, KTYPE>::add_Arc_bothways(KTYPE fromKey, KTYPE toKey, int WEIGHT = 1)
+int Graph<TYPE, KTYPE>::add_Arc_bothways(KTYPE fromKey, KTYPE toKey, int WEIGHT)
 {
     int err = add_Arc(fromKey, toKey, WEIGHT);
 
@@ -532,4 +540,73 @@ int Graph<TYPE, KTYPE>::add_Arc_bothways(KTYPE fromKey, KTYPE toKey, int WEIGHT 
 
     return err;     
 
+}
+
+template<class TYPE, class KTYPE>
+int Graph<TYPE, KTYPE>::NumOfDisjoints()
+{   
+    // return Values:
+    //  iNumDisjoints   number of disjoints
+    // -1   empty graph disjoint has no meaning
+   
+    if(!first)
+    {
+        return -1;  //empty graph
+    }
+
+    Vertex<TYPE>    *pWalkVertex = first, *currentVertex = nullptr; 
+    Arc<TYPE>       *pWalkArc = nullptr;
+
+    while(pWalkVertex)
+    {
+        pWalkVertex->processed = 0;                     //setting processed flag for all vertices to 0
+        pWalkVertex = pWalkVertex->pNextVertex;
+    }
+
+    pWalkVertex = first;
+    iNumDisjoints = 1;      //no disjoints
+    std::stack<Vertex<TYPE>* >   VertexStack;
+
+    while(pWalkVertex)
+    {
+        if(pWalkVertex->processed != 2)                 //vertex has not been processed
+        {
+            if(pWalkVertex->processed == 0)             //vertex not in stack
+            {
+                VertexStack.push(pWalkVertex);  //put in stack
+                pWalkVertex->processed = 1;             //mark in stack
+            }
+
+            while(!VertexStack.empty())
+            {
+                currentVertex = VertexStack.top();
+                VertexStack.pop();
+                currentVertex->processed = 2;
+                pWalkArc = currentVertex->pArc;
+
+                while(pWalkArc)
+                {
+                    if(pWalkArc->pDestination->processed == 0)
+                    {
+                        VertexStack.push(pWalkArc->pDestination);
+                        pWalkArc->pDestination->processed = 1;
+                    }
+                    pWalkArc = pWalkArc->pNextArc;
+                }
+
+            }
+        }
+        
+
+        pWalkVertex = pWalkVertex->pNextVertex;
+        if(pWalkVertex && pWalkVertex->processed == 0)
+        {
+            iNumDisjoints++;
+        }    
+    }
+
+    if(iNumDisjoints == 1)
+        return 0;
+    else
+    return iNumDisjoints;
 }
