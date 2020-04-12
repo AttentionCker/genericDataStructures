@@ -3,6 +3,8 @@
 #include<utility>
 #include<iostream>
 
+#define INT_MAX 1000
+
 //declaring prototypes templates of STRUCTS to be used by the Graph
 template <class TYPE>
 struct Vertex;
@@ -23,6 +25,7 @@ struct Vertex
     unsigned int    outdegree;
     short           processed;
     Arc<TYPE>       *pArc;
+    bool            bInMinTree;         //min-span-tree-flag            
 };
 
 //ARC(EDGE)
@@ -32,6 +35,7 @@ struct Arc
     Vertex<TYPE>    *pDestination;
     Arc<TYPE>       *pNextArc;
     int             weight;
+    bool            bInMinTree;         //min-span-tree-flag
 };
 
 
@@ -67,6 +71,8 @@ class Graph
         
         //additional functionalities:
         int NumOfDisjoints();           //done                
+        int MinSpanningTree();
+
 };
 
 //function definitions of the class Graph:
@@ -609,4 +615,84 @@ int Graph<TYPE, KTYPE>::NumOfDisjoints()
         return 0;
     else
     return iNumDisjoints;
+}
+
+
+template<class TYPE,class KTYPE>
+int Graph<TYPE, KTYPE>::MinSpanningTree()
+{
+    if(!count)      //equivalent to first == nullptr
+    {
+        return -1;  //empty graph
+    }
+
+
+    Vertex<TYPE>    *pWalkVertex    =   first;
+    Arc<TYPE>       *pWalkArc       =   nullptr;
+
+    while(pWalkVertex)
+    {   
+        pWalkVertex->bInMinTree = 0;
+        pWalkArc = pWalkVertex->pArc;
+        while(pWalkArc)
+        {
+            pWalkArc->bInMinTree = 0;
+            pWalkArc = pWalkArc->pNextArc;
+        }
+        pWalkVertex = pWalkVertex->pNextVertex;
+    }
+
+
+    first->bInMinTree = true;
+    int c = 1;
+    while(c<count)
+    {
+        
+        int iMinWeight;
+        iMinWeight = INT_MAX;
+        Arc<TYPE>   *pMinWeightArc = nullptr;
+
+        for(pWalkVertex = first; pWalkVertex; pWalkVertex = pWalkVertex->pNextVertex)
+        {
+            if(pWalkVertex->bInMinTree)
+            {
+                pWalkArc = pWalkVertex->pArc;
+
+                while(pWalkArc)
+                {
+                    if(!pWalkArc->pDestination->bInMinTree && !pWalkArc->bInMinTree && pWalkArc->weight <= iMinWeight)
+                    {
+                        pMinWeightArc = pWalkArc;
+                        iMinWeight = pMinWeightArc->weight;
+                    }
+                    pWalkArc = pWalkArc->pNextArc;
+                }
+            }
+            
+        }
+
+        pMinWeightArc->bInMinTree = true;
+        pMinWeightArc->pDestination->bInMinTree = true;
+        c++;
+
+    }
+
+    pWalkVertex = first;
+    pWalkArc = nullptr;
+
+    while(pWalkVertex)
+    {
+        pWalkArc = pWalkVertex->pArc;
+        
+        std::cout<<"\n("<<pWalkVertex->data.key<<", "<<pWalkVertex->data.val<<")";
+        while(pWalkArc)
+        {
+            if(pWalkArc->bInMinTree)
+                std::cout<<"=>("<<pWalkArc->pDestination->data.key<<", "<<pWalkArc->pDestination->data.val<<", "<<pWalkArc->weight<<")";
+            pWalkArc = pWalkArc->pNextArc;
+        }
+        pWalkVertex = pWalkVertex->pNextVertex;
+    }
+
+    return 1;
 }
