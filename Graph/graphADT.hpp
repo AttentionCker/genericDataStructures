@@ -68,10 +68,11 @@ class Graph
     
         //visualise the graph:
         void Visualize_Graph();          //done
+        void Visualize_Weighted_Graph();      //done
         
         //additional functionalities:
         int NumOfDisjoints();           //done                
-        int MinSpanningTree();
+        int MinSpanningTree();          //done 
 
 };
 
@@ -529,6 +530,33 @@ void Graph<TYPE, KTYPE>::Visualize_Graph()
     return;
 }
 
+template <class TYPE, class KTYPE>
+void Graph<TYPE, KTYPE>::Visualize_Weighted_Graph()
+{   
+    
+    if(!first)
+    {
+        return;
+    }
+    Vertex<TYPE>    *pWalkVertex = first;
+    Arc<TYPE>       *pWalkArc = nullptr;
+
+    while(pWalkVertex)
+    {
+        pWalkArc = pWalkVertex->pArc;
+        std::cout<<"\n("<<pWalkVertex->data.key<<", "<<pWalkVertex->data.val<<")";
+        while(pWalkArc)
+        {
+            std::cout<<"=>("<<pWalkArc->pDestination->data.key<<", "<<pWalkArc->pDestination->data.val<<", "<<pWalkArc->weight<<")";
+            pWalkArc = pWalkArc->pNextArc;
+        }
+        pWalkVertex = pWalkVertex->pNextVertex;
+    }
+    std::cout<<"\n";
+    return;
+}
+
+
 
 template<class TYPE, class KTYPE>
 int Graph<TYPE, KTYPE>::add_Arc_bothways(KTYPE fromKey, KTYPE toKey, int WEIGHT)
@@ -642,7 +670,8 @@ int Graph<TYPE, KTYPE>::MinSpanningTree()
         pWalkVertex = pWalkVertex->pNextVertex;
     }
 
-
+    std::vector< Vertex<TYPE>* >  InTreeVertices;
+    InTreeVertices.push_back(first);
     first->bInMinTree = true;
     int c = 1;
     while(c<count)
@@ -652,7 +681,9 @@ int Graph<TYPE, KTYPE>::MinSpanningTree()
         iMinWeight = INT_MAX;
         Arc<TYPE>   *pMinWeightArc = nullptr;
 
-        for(pWalkVertex = first; pWalkVertex; pWalkVertex = pWalkVertex->pNextVertex)
+        KTYPE   tempToKey = first->data.key;
+
+        for(auto pWalkVertex : InTreeVertices)
         {
             if(pWalkVertex->bInMinTree)
             {
@@ -664,6 +695,7 @@ int Graph<TYPE, KTYPE>::MinSpanningTree()
                     {
                         pMinWeightArc = pWalkArc;
                         iMinWeight = pMinWeightArc->weight;
+                        tempToKey = pWalkVertex->data.key;
                     }
                     pWalkArc = pWalkArc->pNextArc;
                 }
@@ -672,8 +704,25 @@ int Graph<TYPE, KTYPE>::MinSpanningTree()
         }
 
         pMinWeightArc->bInMinTree = true;
+        InTreeVertices.push_back(pMinWeightArc->pDestination);
         pMinWeightArc->pDestination->bInMinTree = true;
         c++;
+
+        //adding the other direction arc:
+
+        {
+            // KTYPE toKey = pWalkVertex->data.key;
+            pWalkArc = pMinWeightArc->pDestination->pArc;
+            while(pWalkArc && pWalkArc->pDestination->data.key != tempToKey)
+            {
+                pWalkArc = pWalkArc->pNextArc;
+            }
+
+            if(pWalkArc)
+            {
+                pWalkArc->bInMinTree = true;
+            }
+        }
 
     }
 
