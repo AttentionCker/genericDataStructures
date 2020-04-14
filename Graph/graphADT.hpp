@@ -25,7 +25,9 @@ struct Vertex
     unsigned int    outdegree;
     short           processed;
     Arc<TYPE>       *pArc;
-    bool            bInMinTree;         //min-span-tree-flag            
+    bool            bInMinTree;         //min-span-tree-flag
+    bool            bInMinPathTree;     //min-path-flag
+    int             iPathLength;            
 };
 
 //ARC(EDGE)
@@ -36,6 +38,7 @@ struct Arc
     Arc<TYPE>       *pNextArc;
     int             weight;
     bool            bInMinTree;         //min-span-tree-flag
+    bool            bInMinPathTree;
 };
 
 
@@ -67,12 +70,13 @@ class Graph
         int BreadthFirstTravel(void (*process)(TYPE ProcData)); //done
     
         //visualise the graph:
-        void Visualize_Graph();          //done
-        void Visualize_Weighted_Graph();      //done
+        void Visualize_Graph();                 //done
+        void Visualize_Weighted_Graph();        //done
         
         //additional functionalities:
-        int NumOfDisjoints();           //done                
-        int MinSpanningTree();          //done 
+        int NumOfDisjoints();                   //done                
+        int MinSpanningTree();                  //done 
+        int ShortestPath(KTYPE , KTYPE);        //done
 
 };
 
@@ -649,6 +653,11 @@ int Graph<TYPE, KTYPE>::NumOfDisjoints()
 template<class TYPE,class KTYPE>
 int Graph<TYPE, KTYPE>::MinSpanningTree()
 {
+    //return values:
+    // -1   Empty Graph
+    //  1   Success
+
+
     if(!count)      //equivalent to first == nullptr
     {
         return -1;  //empty graph
@@ -691,7 +700,7 @@ int Graph<TYPE, KTYPE>::MinSpanningTree()
 
                 while(pWalkArc)
                 {
-                    if(!pWalkArc->pDestination->bInMinTree && !pWalkArc->bInMinTree && pWalkArc->weight <= iMinWeight)
+                    if(!pWalkArc->pDestination->bInMinTree && pWalkArc->weight <= iMinWeight)
                     {
                         pMinWeightArc = pWalkArc;
                         iMinWeight = pMinWeightArc->weight;
@@ -707,7 +716,7 @@ int Graph<TYPE, KTYPE>::MinSpanningTree()
         InTreeVertices.push_back(pMinWeightArc->pDestination);
         pMinWeightArc->pDestination->bInMinTree = true;
         c++;
-
+ 
         //adding the other direction arc:
 
         {
@@ -744,4 +753,238 @@ int Graph<TYPE, KTYPE>::MinSpanningTree()
     }
 
     return 1;
+}
+
+
+template<class TYPE, class KTYPE>
+int Graph<TYPE, KTYPE>::ShortestPath(KTYPE fromKey, KTYPE toKey)
+{
+
+    if(!first)
+    {
+        return -1;  // function called on empty graph
+    }
+
+    Vertex<TYPE>    *pWalkVertex    =   first;
+    Vertex<TYPE>    *pfromVertex    =   nullptr;
+    Vertex<TYPE>    *ptoVertex      =   nullptr;
+    Arc<TYPE>       *pWalkArc       =   nullptr;
+
+    while(pWalkVertex)
+    {   
+        if(pWalkVertex->data.key == fromKey)
+            pfromVertex = pWalkVertex;
+
+
+        if(pWalkVertex->data.key == toKey)
+            ptoVertex = pWalkVertex;
+
+        pWalkVertex->bInMinPathTree     = 0;
+        pWalkVertex->iPathLength        = INT_MAX;
+
+        pWalkArc = pWalkVertex->pArc;
+        while(pWalkArc)
+        {
+            pWalkArc->bInMinPathTree = 0;
+            pWalkArc = pWalkArc->pNextArc;
+        }
+        pWalkVertex = pWalkVertex->pNextVertex;
+    }
+
+    if(!pfromVertex || !ptoVertex)
+    {
+        return -2;      //vertices not available
+    }
+
+    
+    std::vector< Vertex<TYPE>* >  InTreeVertices;
+    InTreeVertices.push_back(pfromVertex);
+    pfromVertex->bInMinPathTree = true;
+    pfromVertex->iPathLength = 0;
+    int c = 1;
+   
+    while(c<count)
+    {
+        
+        int iMinPathLength = INT_MAX;
+        
+        Arc<TYPE>   *pMinPathArc = nullptr;
+
+        for(auto pWalkVertex : InTreeVertices)
+        {
+            if(pWalkVertex->bInMinPathTree)
+            {
+                pWalkArc = pWalkVertex->pArc;
+
+                while(pWalkArc)
+                {
+                    if(!pWalkArc->pDestination->bInMinPathTree && (pWalkVertex->iPathLength + pWalkArc->weight) <= iMinPathLength)
+                    {
+                        pMinPathArc = pWalkArc;
+                        iMinPathLength = pMinPathArc->weight + pWalkVertex->iPathLength;                        
+                    }
+                    pWalkArc = pWalkArc->pNextArc;
+                }
+            }
+            
+        }
+
+        pMinPathArc->bInMinPathTree = true;
+        pMinPathArc->pDestination->bInMinPathTree = true;
+        InTreeVertices.push_back(pMinPathArc->pDestination);
+        pMinPathArc->pDestination->iPathLength = iMinPathLength;
+        c++;
+
+    }    
+/*  //display the minPathTree 
+    pWalkVertex = first;
+    pWalkArc = nullptr;
+
+    while(pWalkVertex)
+    {
+        pWalkArc = pWalkVertex->pArc;
+        
+        std::cout<<"\n("<<pWalkVertex->data.key<<", "<<pWalkVertex->data.val<<")";
+        while(pWalkArc)
+        {
+            if(pWalkArc->bInMinPathTree)
+                std::cout<<"=>("<<pWalkArc->pDestination->data.key<<", "<<pWalkArc->pDestination->data.val<<", "<<pWalkArc->weight<<")";
+            pWalkArc = pWalkArc->pNextArc;
+        }
+        pWalkVertex = pWalkVertex->pNextVertex;
+    }
+*/
+
+    std::stack< Vertex<TYPE>* >     tempStack;
+    tempStack.push(pfromVertex);
+
+    std::vector< Vertex<TYPE>* >    vectShortestPath;
+
+    bool toVertexFound = false;
+
+    while(!toVertexFound)
+    {   pWalkVertex = tempStack.top();
+        
+        //if only one vertex is available in the stack pop it and push in the solution. AND then push all adjacent vertices in the stack
+        if(tempStack.size() == 1)
+        {
+            vectShortestPath.push_back(pWalkVertex);
+            tempStack.pop();
+            
+            pWalkArc = pWalkVertex->pArc;
+
+            while(pWalkArc)
+            {
+                if(pWalkArc->bInMinPathTree)
+                {
+                    if(pWalkArc->pDestination->data.key == toKey)
+                    {
+                        vectShortestPath.push_back(pWalkArc->pDestination);
+                        toVertexFound = true;
+                        pWalkArc = nullptr;
+                    }
+                    else
+                    {
+                        tempStack.push(pWalkArc->pDestination);
+                        pWalkArc->pDestination->processed = 1;
+                        pWalkArc = pWalkArc->pNextArc;
+                    }
+                }
+                else
+                {
+                    pWalkArc = pWalkArc->pNextArc;
+                }
+                
+            }
+        }
+        // if more than one vertices available in stack, check for presence of toVertex from the top vertex by dfs. if toVertex present (it must be present UNIQUELY) push that vertex to solution else pop it.
+        else
+        {
+            std::stack< Vertex<TYPE>* >     dfsStack;
+            dfsStack.push(pWalkVertex);
+
+            bool dfsToVertexPresent = false;
+
+            while(!dfsStack.empty() && !dfsToVertexPresent)
+            {
+                pWalkArc = (dfsStack.top())->pArc;
+                dfsStack.pop();
+
+                while(pWalkArc)
+                {
+                    if(pWalkArc->bInMinPathTree)
+                    {
+                        if(pWalkArc->pDestination->data.key == toKey)
+                        {
+                            pWalkArc = nullptr;
+                            pWalkVertex->processed = 2;
+                            vectShortestPath.push_back(pWalkVertex);
+                            dfsToVertexPresent = true;
+                        }
+                        else
+                        {
+                            dfsStack.push(pWalkArc->pDestination);
+                            pWalkArc = pWalkArc->pNextArc;
+                        }
+                        
+                    }
+                    else
+                    {
+                        pWalkArc = pWalkArc->pNextArc;
+                    }
+                }
+            }
+
+            if(pWalkVertex->processed == 1)
+            {
+                tempStack.pop();
+                pWalkVertex->processed = 2;
+            }
+            else
+            {
+                while(!tempStack.empty())
+                {
+                    tempStack.pop();
+                }   //saving space
+
+                pWalkArc = pWalkVertex->pArc;
+                while (pWalkArc)
+                {
+                    if (pWalkArc->bInMinPathTree)
+                    {
+                        if (pWalkArc->pDestination->data.key == toKey)
+                        {
+                            vectShortestPath.push_back(pWalkArc->pDestination);
+                            toVertexFound = true;
+                            pWalkArc = nullptr;
+                        }
+                        else
+                        {
+                            tempStack.push(pWalkArc->pDestination);
+                            pWalkArc->pDestination->processed = 1;
+                            pWalkArc = pWalkArc->pNextArc;
+                        }
+                    }
+                    else
+                    {
+                        pWalkArc = pWalkArc->pNextArc;
+                    }
+                }
+            }
+            
+
+        }
+        
+    }
+
+   //displaying the shortest path from fromVertex to toVertex and also the min path length:
+    
+    for(typename std::vector< Vertex<TYPE>* >::iterator i = vectShortestPath.begin(); i != --(vectShortestPath.end()); i++)
+    {
+        std::cout<<(*i)->data.val<<"=>";
+    }
+    std::cout<<(*(--(vectShortestPath.end())))->data.val<<"\nMinimum Path Length = "<<ptoVertex->iPathLength;
+
+    return 1;
+
 }
