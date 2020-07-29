@@ -2,16 +2,16 @@
 #define AJ_BIGINT_H
 
 #include <string>
+#include <deque>
+#include <utility>
 #include <stdint.h>
-#include <vector>
 #include <assert.h>
 #include <ctype.h>
 
 namespace aj {
 
-    constexpr auto LOG_2 = 0.301; 
-    constexpr long zero_shift = static_cast<double>((sizeof(int) / 2) * 8) * LOG_2;
-    
+    using ulong = unsigned long;
+
     enum g_sign {minus = 0, plus = 1};  //minus = false, plus = true
 
     class BigInt 
@@ -19,29 +19,46 @@ namespace aj {
         private:
             g_sign bSign_;
             std::string strNum_;
-            std::vector<int> vecNum_;
+            std::deque<int> dqNum_;
 
         public:
+
+        // constructors:
             BigInt();
             explicit BigInt(std::string s);
 
         //methods:
-            std::string getNum();
+            std::string getNum() const;
 
-          // for debugging purpose
-            g_sign getSign(); 
-            std::vector<int> getVecNum();
+            // for debugging purpose
+            g_sign getSign() const; 
+            std::deque<int> getDQNum() const;
+            ulong size() const;
 
+        // operations:
+            BigInt operator + (const BigInt& rOperand); 
+        
         private:    
-            BigInt add(BigInt& n1, BigInt& n2);
+        
+        // constructor:
+            BigInt(const std::deque<int>& dq, g_sign sign);
 
         // static members:
         private:
+        
+        //values
+        static const int D;
+        
+        // methods:
+        static BigInt add(const BigInt& n1, const BigInt& n2);
         static bool IsNum(const std::string&); 
-        static int strToVec(std::vector<int>& vec, const std::string& str);
+        static int strToDQ(std::deque<int>& ls, const std::string& str);
+        static void DQToStr(const std::deque<int>& dq, std::string& str);
     };
 
-}
+    // additional helping functions:
+    constexpr int calculateD();
 
+}
 
 #endif
