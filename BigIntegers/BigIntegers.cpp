@@ -29,7 +29,7 @@ namespace aj{
         else if(s[0] == '-')
         {
             bSign_ = minus;
-            strNum_ = s.substr(1);
+            strNum_ = s;
         }
         else if (s[0] == '+')
         {
@@ -40,8 +40,9 @@ namespace aj{
     }
 
     // private:
-    BigInt::BigInt(const std::deque<int>& dq, g_sign sign)
+    BigInt::BigInt(std::deque<int>& dq, g_sign sign)
     {
+        removePrecedingZeros(dq);
         dqNum_ = dq;
         DQToStr(dq, strNum_);
         setSign(sign);
@@ -72,14 +73,52 @@ namespace aj{
     }
 
     // OPERATORS: 
-    BigInt BigInt::operator + (const BigInt& rOperand)
+    BigInt BigInt::operator + (const BigInt& rOperand) const
     {
         return add(*this, rOperand);
     }
 
-    BigInt BigInt::operator * (const BigInt& rOperand)
+    BigInt BigInt::operator - (const BigInt& rOperand) const
+    {
+        return subtract(*this, rOperand);
+    }
+
+    BigInt BigInt::operator * (const BigInt& rOperand) const
     {
         return multiply(*this, rOperand);
+    }
+
+    bool BigInt::operator > (const BigInt& rOperand) const
+    {
+        return 
+            this->getSign() == rOperand.getSign() ? 
+                (this->size() != rOperand.size() ? !(this->getSign() ^ (this->size() > rOperand.size())) : (this->getSign() == plus ? this->getNum() > rOperand.getNum() : this->getNum() < rOperand.getNum())) 
+            : this->getSign() ;
+    }
+    
+    bool BigInt::operator < (const BigInt& rOperand) const
+    {
+        return !(*this > rOperand || *this == rOperand);
+    }
+    
+    bool BigInt::operator >= (const BigInt& rOperand) const
+    {
+        return (*this > rOperand || *this == rOperand);
+    }
+    
+    bool BigInt::operator <= (const BigInt& rOperand) const
+    {
+        return !(*this > rOperand);
+    }
+    
+    bool BigInt::operator == (const BigInt& rOperand) const
+    {
+        return (this->size() != rOperand.size() ? false : this->getNum() == rOperand.getNum());  
+    }
+    
+    bool BigInt::operator != (const BigInt& rOperand) const
+    {
+        return !(*this == rOperand); 
     }
 
 // ------------------------------------------------------------------------------
@@ -132,10 +171,12 @@ namespace aj{
             return false;        
     }
 
-    int BigInt::strToDQ(std::deque<int>& ls, const std::string& str)
+    int BigInt::strToDQ(std::deque<int>& ls, const std::string& numStr)
     {
         long i = 1;
+        const std::string& str = (std::isdigit(numStr[0]) ? numStr : numStr.substr(1));
         long idx = str.size() - zero_shift * i;
+
         while(idx > -1)         
         {
             ls.push_back(std::stoi(str.substr(idx, zero_shift)));
@@ -165,7 +206,23 @@ namespace aj{
             str += smallStr;           
         }
     }
-    
+
+    void BigInt::removePrecedingZeros(std::deque<int>& dq)
+    {
+        int i = dq.size() - 1;
+        while(i > 0 && dq[i] == 0)
+            i--;
+        if(i > -1)
+            dq.erase(dq.begin()+ i + 1, dq.end());
+        else
+            dq.erase(dq.begin() + 1, dq.end());
+    }   
+
+    BigInt BigInt::mod(const BigInt& n)
+    {
+        const BigInt zero("0");
+        return (n < zero) ? BigInt("-1") * n : n;
+    }
 
     BigInt BigInt::add(const BigInt& n1, const BigInt& n2)
     {
@@ -203,6 +260,49 @@ namespace aj{
         }
         else    // call subtract
             return BigInt();
+    }
+
+    BigInt BigInt::subtract(const BigInt& n1, const BigInt& n2)
+    {
+
+        if (n1 == n2)
+            return BigInt(); // return 0
+
+        if(n1.getSign() == n2.getSign())
+        {
+            if (mod(n1) >= mod(n2))
+            {
+                auto res(n1.getDQNum());
+                const auto& l1 = n1.getDQNum(), l2 = n2.getDQNum();
+                int i = 0, carry = 0;
+                while (i < l2.size())
+                {
+                    auto temp = res[i] - l2[i] - carry;
+                    res[i++] = (temp < 0 ? (D + temp) % D : temp % D);
+                    carry = (temp < 0 ? 1 : 0);
+                }
+                while (i < res.size())
+                {
+                    auto temp = res[i] - carry;
+                    res[i++] = (temp < 0 ? (D + temp) % D : temp % D);
+                    carry = (temp < 0 ? 1 : 0);
+                }
+                assert(carry == 0 && "something is wrong with the subtraction if this message is displayed");
+
+                return BigInt(res, n1.bSign_);
+            }
+            else
+            {
+                auto res = subtract(n2, n1);
+                res.setSign(!res.getSign());
+                return res;
+            }    
+        }
+        else
+        {
+            return BigInt();
+        }
+        
     }
 
     BigInt BigInt::multiply(const BigInt& n1, const BigInt& n2)
