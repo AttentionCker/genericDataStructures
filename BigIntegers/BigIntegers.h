@@ -36,12 +36,15 @@ namespace aj {
             ulong size() const;
 
         // operations:
-            BigInt operator + (const BigInt& rOperand); 
+            BigInt operator + (const BigInt& rOperand);
+            BigInt operator * (const BigInt& rOperand); 
         
         private:    
         
         // constructor:
             BigInt(const std::deque<int>& dq, g_sign sign);
+        // methods:
+        void setSign(bool sign);
 
         // static members:
         private:
@@ -51,6 +54,7 @@ namespace aj {
         
         // methods:
         static BigInt add(const BigInt& n1, const BigInt& n2);
+        static BigInt multiply(const BigInt& n1, const BigInt& n2);
         static bool IsNum(const std::string&); 
         static int strToDQ(std::deque<int>& ls, const std::string& str);
         static void DQToStr(const std::deque<int>& dq, std::string& str);

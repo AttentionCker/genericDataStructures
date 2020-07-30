@@ -44,10 +44,7 @@ namespace aj{
     {
         dqNum_ = dq;
         DQToStr(dq, strNum_);
-        bSign_ = sign;
-        // if minus
-        if(!sign)
-        strNum_ = "-" + strNum_;
+        setSign(sign);
     }
 
 // ------------------------------------------------------------------------------
@@ -74,50 +71,37 @@ namespace aj{
         return strNum_.size();
     }
 
+    // OPERATORS: 
     BigInt BigInt::operator + (const BigInt& rOperand)
     {
         return add(*this, rOperand);
     }
 
+    BigInt BigInt::operator * (const BigInt& rOperand)
+    {
+        return multiply(*this, rOperand);
+    }
+
 // ------------------------------------------------------------------------------
     // private methods: 
 
-    BigInt BigInt::add(const BigInt& n1, const BigInt& n2)
+    void BigInt::setSign(bool sign)
     {
-        // check if this works:
-        if(n1.bSign_ == n2.bSign_)
+        if(sign)
         {
-            if (n1.size() >= n2.size())
-            {
-                auto res(n1.getDQNum());
-                const auto& l1 = n1.getDQNum(), l2 = n2.getDQNum();
-                int i = 0, carry = 0;
-                while (i < l2.size())
-                {
-                    auto temp = res[i] + l2[i] + carry;
-                    res[i++] = temp % D;
-                    carry = temp / D;
-                }
-                while (i < res.size())
-                {
-                    auto temp = res[i] + carry;
-                    res[i++] = temp % D;
-                    carry = temp / D;
-                }
-                if(carry)
-                    res.push_back(carry);
-                
-                return BigInt(res, n1.bSign_);
-            }
-            else
-            {
-                return add(n2, n1);
-            }
-            
-            
+            if(strNum_[0] == '-')
+            strNum_ = strNum_.substr(1);
+            bSign_ = plus;
         }
-        else    // call subtract
-            return BigInt();
+        else
+        {
+            if(isdigit(strNum_[0]))
+            {
+                strNum_ = "-" + strNum_;
+                bSign_ = minus;
+            }
+        }
+        
     }
 
 // ------------------------------------------------------------------------------
@@ -183,6 +167,84 @@ namespace aj{
     }
     
 
+    BigInt BigInt::add(const BigInt& n1, const BigInt& n2)
+    {
+        // check if this works:
+        if(n1.bSign_ == n2.bSign_)
+        {
+            if (n1.size() >= n2.size())
+            {
+                auto res(n1.getDQNum());
+                const auto& l1 = n1.getDQNum(), l2 = n2.getDQNum();
+                int i = 0, carry = 0;
+                while (i < l2.size())
+                {
+                    auto temp = res[i] + l2[i] + carry;
+                    res[i++] = temp % D;
+                    carry = temp / D;
+                }
+                while (i < res.size())
+                {
+                    auto temp = res[i] + carry;
+                    res[i++] = temp % D;
+                    carry = temp / D;
+                }
+                if(carry)
+                    res.push_back(carry);
+
+                return BigInt(res, n1.bSign_);
+            }
+            else
+            {
+                return add(n2, n1);
+            }
+            
+            
+        }
+        else    // call subtract
+            return BigInt();
+    }
+
+    BigInt BigInt::multiply(const BigInt& n1, const BigInt& n2)
+    {
+        if(n1.size() >= n2.size())
+        {
+            if(n2.getNum() == "0")
+                return n2;
+            if(n2.getNum() == "1")
+            {
+                auto result(n1);
+                result.setSign(!(n1.getSign() ^ n2.getSign()));
+                return result;
+            }
+
+            auto result = BigInt();    // result = 0
+            const auto& l1 = n1.getDQNum(), l2 = n2.getDQNum();
+            int i = -1;
+            while (++i < l2.size())
+            {
+                int carry = 0;
+                std::deque<int> dqTemp(i, 0);
+                for (int j = 0; j < l1.size(); j++)
+                {
+                    dqTemp.push_back((l2[i] * l1[j] + carry) % D);
+                    carry = (l2[i] * l1[j] + carry) / D ;                   
+                }
+                if(carry)
+                    dqTemp.push_back(carry);
+
+                result = result + BigInt(dqTemp, plus);
+            }
+            result.setSign(!(n1.getSign() ^ n2.getSign())); // use of !XOR = XNOR
+            return result;
+            
+        }
+        else
+            return multiply(n2, n1);
+        
+    }
+
+// -----------------------------------------------------------------------------------------------------------------------------
     // additional functions:
     constexpr int calculateD()
     {
