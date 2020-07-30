@@ -2,7 +2,7 @@
 #define AJ_BIGINT_H
 
 #include <string>
-#include <deque>
+#include <vector>
 #include <utility>
 #include <stdint.h>
 #include <assert.h>
@@ -19,7 +19,7 @@ namespace aj {
         private:
             g_sign bSign_;
             std::string strNum_;
-            std::deque<int> dqNum_;
+            std::vector<int> vecNum_;
 
         public:
 
@@ -32,7 +32,7 @@ namespace aj {
 
             // for debugging purpose
             g_sign getSign() const; 
-            std::deque<int> getDQNum() const;
+            std::vector<int> getvecNum() const;
             ulong size() const;
 
         // operations:
@@ -45,11 +45,15 @@ namespace aj {
             bool operator <= (const BigInt& rOperand) const;
             bool operator == (const BigInt& rOperand) const; 
             bool operator != (const BigInt& rOperand) const;
+            BigInt& operator ++ (); // prefix
+            BigInt& operator -- (); // prefix
+            BigInt operator ++ (int); // postfix
+            BigInt operator -- (int); // postfix
 
         private:    
         
         // constructor:
-            BigInt(std::deque<int>& dq, g_sign sign);
+            BigInt(std::vector<int>& vec, g_sign sign);
         // methods:
         void setSign(bool sign);
 
@@ -64,9 +68,9 @@ namespace aj {
         static BigInt subtract(const BigInt& n1, const BigInt& n2);
         static BigInt multiply(const BigInt& n1, const BigInt& n2);
         static bool IsNum(const std::string&); 
-        static int strToDQ(std::deque<int>& dq, const std::string& str);
-        static void DQToStr(const std::deque<int>& dq, std::string& str);
-        static void removePrecedingZeros(std::deque<int>& dq);
+        static int strToVec(std::vector<int>& vec, const std::string& str);
+        static void vecToStr(const std::vector<int>& vec, std::string& str);
+        static void removePrecedingZeros(std::vector<int>& vec);
         
         public:
         static BigInt mod(const BigInt& n);

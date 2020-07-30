@@ -14,7 +14,8 @@ namespace aj{
     {
         bSign_ = plus;
         strNum_ = '0';
-        dqNum_ = {0};
+        vecNum_.reserve(10);
+        vecNum_ = {0};
     }
 
     BigInt::BigInt(std::string s)
@@ -36,15 +37,16 @@ namespace aj{
             bSign_ = plus;
             strNum_ = s.substr(1);
         }   
-        strToDQ(dqNum_, strNum_);           
+        vecNum_.reserve(10);
+        strToVec(vecNum_, strNum_);           
     }
 
     // private:
-    BigInt::BigInt(std::deque<int>& dq, g_sign sign)
+    BigInt::BigInt(std::vector<int>& vec, g_sign sign)
     {
-        removePrecedingZeros(dq);
-        dqNum_ = dq;
-        DQToStr(dq, strNum_);
+        removePrecedingZeros(vec);
+        vecNum_ = vec;
+        vecToStr(vec, strNum_);
         setSign(sign);
     }
 
@@ -62,9 +64,9 @@ namespace aj{
         return bSign_;
     } 
 
-    std::deque<int> BigInt::getDQNum() const
+    std::vector<int> BigInt::getvecNum() const
     {
-        return dqNum_;
+        return vecNum_;
     }
 
     ulong BigInt::size() const
@@ -121,6 +123,29 @@ namespace aj{
         return !(*this == rOperand); 
     }
 
+    BigInt& BigInt::operator++()
+    {
+        return *this = *this + BigInt("1");
+    }
+
+    BigInt& BigInt::operator--()
+    {
+        return *this = *this - BigInt("1");
+    }
+
+    BigInt BigInt::operator++(int)
+    {
+        auto temp = *this;
+        *this = *this + BigInt("1");
+        return temp;
+    }
+
+    BigInt BigInt::operator--(int)
+    {
+        auto temp = *this;
+        *this = *this - BigInt("1");
+        return temp;
+    }
 // ------------------------------------------------------------------------------
     // private methods: 
 
@@ -171,7 +196,7 @@ namespace aj{
             return false;        
     }
 
-    int BigInt::strToDQ(std::deque<int>& ls, const std::string& numStr)
+    int BigInt::strToVec(std::vector<int>& ls, const std::string& numStr)
     {
         long i = 1;
         const std::string& str = (std::isdigit(numStr[0]) ? numStr : numStr.substr(1));
@@ -188,15 +213,15 @@ namespace aj{
         return 0;
     }
 
-    void BigInt::DQToStr(const std::deque<int>& dq, std::string& str)
+    void BigInt::vecToStr(const std::vector<int>& vec, std::string& str)
     {
-        assert(dq.size() != 0);
+        assert(vec.size() != 0);
 
         str = "";
         std::string smallStr;
-        str = std::to_string(*dq.rbegin());
+        str = std::to_string(*vec.rbegin());
 
-        for(auto itr = dq.rbegin() + 1; itr < dq.rend(); itr++)
+        for(auto itr = vec.rbegin() + 1; itr < vec.rend(); itr++)
         {
             smallStr = std::to_string(*itr);
             while (smallStr.length() < zero_shift)
@@ -207,15 +232,15 @@ namespace aj{
         }
     }
 
-    void BigInt::removePrecedingZeros(std::deque<int>& dq)
+    void BigInt::removePrecedingZeros(std::vector<int>& vec)
     {
-        int i = dq.size() - 1;
-        while(i > 0 && dq[i] == 0)
+        int i = vec.size() - 1;
+        while(i > 0 && vec[i] == 0)
             i--;
         if(i > -1)
-            dq.erase(dq.begin()+ i + 1, dq.end());
+            vec.erase(vec.begin()+ i + 1, vec.end());
         else
-            dq.erase(dq.begin() + 1, dq.end());
+            vec.erase(vec.begin() + 1, vec.end());
     }   
 
     BigInt BigInt::mod(const BigInt& n)
@@ -231,8 +256,8 @@ namespace aj{
         {
             if (n1.size() >= n2.size())
             {
-                auto res(n1.getDQNum());
-                const auto& l1 = n1.getDQNum(), l2 = n2.getDQNum();
+                auto res(n1.getvecNum());
+                const auto& l1 = n1.getvecNum(), l2 = n2.getvecNum();
                 int i = 0, carry = 0;
                 while (i < l2.size())
                 {
@@ -259,7 +284,7 @@ namespace aj{
             
         }
         else    // call subtract
-            return BigInt();
+            return (n1.getSign() ? n1 - BigInt("-1") * n2 : n2 - BigInt("-1") * n1);
     }
 
     BigInt BigInt::subtract(const BigInt& n1, const BigInt& n2)
@@ -272,8 +297,8 @@ namespace aj{
         {
             if (mod(n1) >= mod(n2))
             {
-                auto res(n1.getDQNum());
-                const auto& l1 = n1.getDQNum(), l2 = n2.getDQNum();
+                auto res(n1.getvecNum());
+                const auto& l1 = n1.getvecNum(), l2 = n2.getvecNum();
                 int i = 0, carry = 0;
                 while (i < l2.size())
                 {
@@ -300,7 +325,9 @@ namespace aj{
         }
         else
         {
-            return BigInt();
+            auto res = mod(n1) + mod(n2);
+            res.setSign(n1.getSign());
+            return res;
         }
         
     }
@@ -319,21 +346,21 @@ namespace aj{
             }
 
             auto result = BigInt();    // result = 0
-            const auto& l1 = n1.getDQNum(), l2 = n2.getDQNum();
+            const auto& l1 = n1.getvecNum(), l2 = n2.getvecNum();
             int i = -1;
             while (++i < l2.size())
             {
                 int carry = 0;
-                std::deque<int> dqTemp(i, 0);
+                std::vector<int> vecTemp(i, 0);
                 for (int j = 0; j < l1.size(); j++)
                 {
-                    dqTemp.push_back((l2[i] * l1[j] + carry) % D);
+                    vecTemp.push_back((l2[i] * l1[j] + carry) % D);
                     carry = (l2[i] * l1[j] + carry) / D ;                   
                 }
                 if(carry)
-                    dqTemp.push_back(carry);
+                    vecTemp.push_back(carry);
 
-                result = result + BigInt(dqTemp, plus);
+                result = result + BigInt(vecTemp, plus);
             }
             result.setSign(!(n1.getSign() ^ n2.getSign())); // use of !XOR = XNOR
             return result;
